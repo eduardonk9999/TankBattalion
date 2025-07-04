@@ -135,10 +135,22 @@ function broadcastGameState() {
 
 io.on('connection', (socket) => {
   console.log('Novo jogador conectado:', socket.id);
+  
+  // Verifica se já há 2 jogadores conectados
+  const currentPlayers = Object.keys(players).length;
+  if (currentPlayers >= 2) {
+    console.log('Sala cheia! Jogador rejeitado:', socket.id);
+    socket.emit('roomFull', { message: 'Sala cheia! Máximo 2 jogadores.' });
+    socket.disconnect();
+    return;
+  }
+  
   // Cria um novo tanque para o jogador
   players[socket.id] = createTank(socket.id);
   socket.emit('init', { id: socket.id, map });
   broadcastGameState();
+  
+  console.log(`Jogadores conectados: ${Object.keys(players).length}/2`);
 
   // Movimento do tanque
   socket.on('move', (data) => {
@@ -171,6 +183,7 @@ io.on('connection', (socket) => {
     console.log('Jogador desconectado:', socket.id);
     delete players[socket.id];
     broadcastGameState();
+    console.log(`Jogadores conectados: ${Object.keys(players).length}/2`);
   });
 });
 

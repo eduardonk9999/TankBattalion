@@ -166,20 +166,20 @@ class GameManager {
 // ================= FUNÇÕES DE DESENHO INICIAL =================
 
 function drawPlayerLabels() {
-  // Calcula tamanho da fonte baseado no tamanho da tela
-  const fontSize = isMobile ? Math.min(WIDTH, HEIGHT) * 0.04 : 16;
+  // Tamanho fixo da fonte
+  const fontSize = 16;
   ctx.font = `${fontSize}px Arial`;
   ctx.fillStyle = '#fff';
   ctx.textAlign = 'left';
   
-  // Calcula posição Y baseada no tamanho da tela
-  const labelY = isMobile ? fontSize * 1.5 : 25;
+  // Posição Y fixa
+  const labelY = 25;
   
   // Encontra o jogador local
   const localPlayer = gameState.players.find(p => p.id === clientId);
   if (localPlayer) {
     const hearts = '❤️'.repeat(localPlayer.lives);
-    ctx.fillText(`Player 1 ${hearts}`, fontSize * 0.6, labelY);
+    ctx.fillText(`Player 1 ${hearts}`, 10, labelY);
   }
   
   ctx.textAlign = 'right';
@@ -188,7 +188,7 @@ function drawPlayerLabels() {
   if (otherPlayers.length > 0) {
     const otherPlayer = otherPlayers[0];
     const hearts = '❤️'.repeat(otherPlayer.lives);
-    ctx.fillText(`Player 2 ${hearts}`, WIDTH - fontSize * 0.6, labelY);
+    ctx.fillText(`Player 2 ${hearts}`, WIDTH - 10, labelY);
   }
 }
 
@@ -328,17 +328,6 @@ function drawMultiplayer() {
   // Inicializa o padrão de tijolos se ainda não foi criado
   if (!brickPattern) brickPattern = createTankBattalionBrickPattern(ctx);
   
-  // Calcula escala para mobile
-  const scaleX = WIDTH / 900;
-  const scaleY = HEIGHT / 600;
-  const scale = Math.min(scaleX, scaleY);
-  
-  // Aplica escala se for mobile
-  if (isMobile) {
-    ctx.save();
-    ctx.scale(scale, scale);
-  }
-  
   // Desenha o mapa
   for (let y = 0; y < gameState.map.length; y++) {
     for (let x = 0; x < gameState.map[0].length; x++) {
@@ -377,12 +366,7 @@ function drawMultiplayer() {
     });
   }
   
-  // Restaura escala se for mobile
-  if (isMobile) {
-    ctx.restore();
-  }
-  
-  // Desenha labels por cima (sem escala)
+  // Desenha labels
   drawPlayerLabels();
 }
 
@@ -405,6 +389,12 @@ socket.on('init', (data) => {
 // Recebe o estado do jogo do servidor
 socket.on('gameState', (state) => {
   gameState = state;
+});
+
+// Recebe mensagem de sala cheia
+socket.on('roomFull', (data) => {
+  alert('Sala cheia! Máximo 2 jogadores permitidos.');
+  console.log('Sala cheia:', data.message);
 });
 
 // Envia movimento para o servidor
@@ -473,38 +463,22 @@ function detectMobile() {
 
 // Redimensiona o jogo para mobile
 function resizeForMobile() {
-  // Redimensiona o canvas para ocupar toda a tela
+  // Mantém o tamanho original do desktop (900x600)
+  canvas.width = 900;
+  canvas.height = 600;
+  
+  // Apenas ajusta o CSS para ocupar a tela em modo retrato
   canvas.style.width = '100vw';
   canvas.style.height = '100vh';
   canvas.style.position = 'fixed';
   canvas.style.top = '0';
   canvas.style.left = '0';
   canvas.style.zIndex = '1';
+  canvas.style.objectFit = 'contain';
   
-  // Ajusta o tamanho do canvas para a tela
-  const screenWidth = window.innerWidth;
-  const screenHeight = window.innerHeight;
-  
-  // Mantém a proporção 3:2 (900x600) mas adapta para a tela
-  const aspectRatio = 900 / 600;
-  let newWidth, newHeight;
-  
-  if (screenWidth / screenHeight > aspectRatio) {
-    // Tela mais larga que a proporção
-    newHeight = screenHeight;
-    newWidth = screenHeight * aspectRatio;
-  } else {
-    // Tela mais alta que a proporção
-    newWidth = screenWidth;
-    newHeight = screenWidth / aspectRatio;
-  }
-  
-  canvas.width = newWidth;
-  canvas.height = newHeight;
-  
-  // Atualiza as dimensões globais
-  WIDTH = newWidth;
-  HEIGHT = newHeight;
+  // Atualiza as dimensões globais (mantém original)
+  WIDTH = 900;
+  HEIGHT = 600;
   
   // Ajusta o fundo do body
   document.body.style.margin = '0';
@@ -512,7 +486,7 @@ function resizeForMobile() {
   document.body.style.overflow = 'hidden';
   document.body.style.backgroundColor = '#000';
   
-  console.log(`Canvas redimensionado para mobile: ${newWidth}x${newHeight}`);
+  console.log('Canvas configurado para mobile - tamanho original mantido');
 }
 
 // Cria os controles móveis
@@ -664,11 +638,8 @@ function updateMobileMovement() {
   const localPlayer = gameState.players.find(p => p.id === clientId);
   if (!localPlayer || !localPlayer.alive) return;
   
-  // Calcula velocidade baseada na escala
-  const scaleX = WIDTH / 900;
-  const scaleY = HEIGHT / 600;
-  const scale = Math.min(scaleX, scaleY);
-  const speed = 5 * scale;
+  // Velocidade fixa (mesma do desktop)
+  const speed = 5;
   
   let newX = localPlayer.x;
   let newY = localPlayer.y;
