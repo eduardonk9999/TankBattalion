@@ -36,13 +36,8 @@ function createTankBattalionBrickPattern(ctx) {
     }
   }
 
-  // Opcional: desenha borda para visualizar o bloco isolado (remova se quiser)
-  // brickCtx.strokeStyle = 'lime';
-  // brickCtx.strokeRect(0, 0, 16, 16);
-
-  // Exibe só o bloco no documento para ver isolado:
-  document.body.style.background = 'black';
-  document.body.appendChild(brickCanvas);
+  // NÃO adicione o brickCanvas ao body!
+  // document.body.appendChild(brickCanvas); // <-- Removido
 
   return ctx.createPattern(brickCanvas, 'repeat');
 }
@@ -165,33 +160,6 @@ class GameManager {
 
 // ================= FUNÇÕES DE DESENHO INICIAL =================
 
-function drawPlayerLabels() {
-  // Tamanho fixo da fonte
-  const fontSize = 16;
-  ctx.font = `${fontSize}px Arial`;
-  ctx.fillStyle = '#fff';
-  ctx.textAlign = 'left';
-  
-  // Posição Y fixa
-  const labelY = 25;
-  
-  // Encontra o jogador local
-  const localPlayer = gameState.players.find(p => p.id === clientId);
-  if (localPlayer) {
-    const hearts = '❤️'.repeat(localPlayer.lives);
-    ctx.fillText(`Player 1 ${hearts}`, 10, labelY);
-  }
-  
-  ctx.textAlign = 'right';
-  // Encontra outros jogadores
-  const otherPlayers = gameState.players.filter(p => p.id !== clientId);
-  if (otherPlayers.length > 0) {
-    const otherPlayer = otherPlayers[0];
-    const hearts = '❤️'.repeat(otherPlayer.lives);
-    ctx.fillText(`Player 2 ${hearts}`, WIDTH - 10, labelY);
-  }
-}
-
 // Função para desenhar explosão
 function drawExplosion(ctx, x, y, frame) {
   ctx.save();
@@ -237,12 +205,12 @@ function drawExplosion(ctx, x, y, frame) {
 // ================= MOVIMENTAÇÃO DO TANQUE =================
 
 // Velocidade de movimento dos tanques
-const TANK_SPEED = 3;
+const TANK_SPEED = 8;
 
 // Função utilitária para checar colisão do tanque com blocos do mapa
 function canMoveTo(x, y, map, size = 40) {
   // Margem de segurança para evitar grudar nos muros
-  const margin = 2;
+  const margin = 5;
   const adjustedSize = size - margin;
   
   // Verifica os 4 cantos do tanque com margem
@@ -333,7 +301,7 @@ function drawMultiplayer() {
     for (let x = 0; x < gameState.map[0].length; x++) {
       if (gameState.map[y][x] === 1) {
         // Bordas indestrutíveis - cor sólida cinza
-        ctx.fillStyle = '#888';
+        ctx.fillStyle = '#13678A';
         ctx.fillRect(x * 20, y * 20, 20, 20);
       } else if (gameState.map[y][x] === 2) {
         // Blocos de obstáculos destrutíveis - padrão de tijolos
@@ -365,9 +333,6 @@ function drawMultiplayer() {
       drawExplosion(ctx, explosion.x, explosion.y, explosion.frame);
     });
   }
-  
-  // Desenha labels
-  drawPlayerLabels();
 }
 
 function gameLoopMultiplayer() {
@@ -389,6 +354,7 @@ socket.on('init', (data) => {
 // Recebe o estado do jogo do servidor
 socket.on('gameState', (state) => {
   gameState = state;
+  updatePlayerLabels();
 });
 
 // Recebe mensagem de sala cheia
@@ -779,4 +745,45 @@ function checkWallCollision(x, y) {
   }
   
   return false; // Não há colisão
+}
+
+// Nova função para atualizar os labels HTML
+function updatePlayerLabels() {
+  const player1Div = document.getElementById('player1-label');
+  const player2Div = document.getElementById('player2-label');
+  if (!player1Div || !player2Div || !gameState) return;
+  const maxLives = 3;
+
+  // Player 1 (local)
+  const localPlayer = gameState.players.find(p => p.id === clientId);
+  if (localPlayer) {
+    let hearts = '';
+    for (let i = 0; i < maxLives; i++) {
+      if (i < localPlayer.lives) {
+        hearts += '<span style="opacity:1;font-size:28px;vertical-align:middle;">❤️</span>';
+      } else {
+        hearts += '<span style="opacity:0.3;font-size:28px;vertical-align:middle;">❤️</span>';
+      }
+    }
+    player1Div.innerHTML = `Player 1 ${hearts}`;
+  } else {
+    player1Div.innerHTML = '';
+  }
+
+  // Player 2 (outro)
+  const otherPlayers = gameState.players.filter(p => p.id !== clientId);
+  if (otherPlayers.length > 0) {
+    const otherPlayer = otherPlayers[0];
+    let hearts = '';
+    for (let i = 0; i < maxLives; i++) {
+      if (i < otherPlayer.lives) {
+        hearts += '<span style="opacity:1;font-size:28px;vertical-align:middle;">❤️</span>';
+      } else {
+        hearts += '<span style="opacity:0.3;font-size:28px;vertical-align:middle;">❤️</span>';
+      }
+    }
+    player2Div.innerHTML = `Player 2 ${hearts}`;
+  } else {
+    player2Div.innerHTML = '';
+  }
 }

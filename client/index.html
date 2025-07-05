@@ -8,6 +8,10 @@
 </head>
 <body>
   <h1 style="display:none">Tank Battalion Multiplayer</h1>
+  <div id="player-labels" style="width:900px; margin:32px auto 8px auto; display:flex; justify-content:space-between; align-items:center; font-family:'Press Start 2P', Arial, sans-serif; font-size:22px; color:#fff;">
+    <div id="player1-label"></div>
+    <div id="player2-label" style="text-align:right;"></div>
+  </div>
   <canvas id="gameCanvas" width="900" height="600"></canvas>
   <script src="/socket.io/socket.io.js"></script>
   <script src="game.js"></script>
