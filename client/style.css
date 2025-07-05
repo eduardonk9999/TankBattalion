@@ -22,3 +22,9 @@ body {
   margin: 0 auto;
   border: 1px solid #333;
 }
+
+@media (max-width: 900px) {
+  #player-labels {
+    width: 100% !important;
+  }
+}

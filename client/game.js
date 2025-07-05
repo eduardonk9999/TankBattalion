@@ -246,10 +246,18 @@ window.addEventListener('keydown', (e) => {
   let { x, y, direction } = player;
   let nx = x, ny = y, ndir = direction;
   switch (e.key.toLowerCase()) {
-    case 'w': ny -= TANK_SPEED; ndir = 'up'; moved = true; break;
-    case 's': ny += TANK_SPEED; ndir = 'down'; moved = true; break;
-    case 'a': nx -= TANK_SPEED; ndir = 'left'; moved = true; break;
-    case 'd': nx += TANK_SPEED; ndir = 'right'; moved = true; break;
+    case 'w':
+    case 'arrowup':
+      ny -= TANK_SPEED; ndir = 'up'; moved = true; break;
+    case 's':
+    case 'arrowdown':
+      ny += TANK_SPEED; ndir = 'down'; moved = true; break;
+    case 'a':
+    case 'arrowleft':
+      nx -= TANK_SPEED; ndir = 'left'; moved = true; break;
+    case 'd':
+    case 'arrowright':
+      nx += TANK_SPEED; ndir = 'right'; moved = true; break;
   }
   if (moved) {
     // Só move se não colidir com bloco
@@ -259,7 +267,7 @@ window.addEventListener('keydown', (e) => {
       sendMove(x, y, ndir); // Atualiza direção mesmo sem mover
     }
   }
-  if (e.code === 'Space' && canShoot) {
+  if ((e.code === 'Space' || e.key === ' ') && canShoot) {
     const myBullets = gameState.bullets.filter(b => b.owner === clientId);
     if (myBullets.length === 0) {
       let bx = player.x + 20 - 3;
@@ -600,17 +608,12 @@ function createControlButton(text, action, size) {
 // Atualiza o movimento baseado nos controles móveis
 function updateMobileMovement() {
   if (!isMobile || !gameState || !clientId) return;
-  
   const localPlayer = gameState.players.find(p => p.id === clientId);
   if (!localPlayer || !localPlayer.alive) return;
-  
-  // Velocidade fixa (mesma do desktop)
   const speed = 5;
-  
   let newX = localPlayer.x;
   let newY = localPlayer.y;
   let direction = localPlayer.direction;
-
   if (mobileControls.up) {
     newY -= speed;
     direction = 'up';
@@ -627,16 +630,34 @@ function updateMobileMovement() {
     newX += speed;
     direction = 'right';
   }
-
-  // Verifica colisão com paredes
-  if (!checkWallCollision(newX, newY)) {
+  // Colisão ainda mais permissiva no mobile: tanque "menor"
+  function canMoveToMobile(x, y, map, size = 32) {
+    const margin = 0;
+    const adjustedSize = size - margin;
+    const checks = [
+      [x + margin, y + margin],
+      [x + adjustedSize, y + margin],
+      [x + margin, y + adjustedSize],
+      [x + adjustedSize, y + adjustedSize],
+    ];
+    for (const [cx, cy] of checks) {
+      const tx = Math.floor(cx / 20);
+      const ty = Math.floor(cy / 20);
+      if (tx < 0 || tx >= map[0].length || ty < 0 || ty >= map.length) {
+        return false;
+      }
+      if (map[ty] && (map[ty][tx] === 1 || map[ty][tx] === 2)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  if (canMoveToMobile(newX, newY, gameState.map, 32)) {
     localPlayer.x = newX;
     localPlayer.y = newY;
     localPlayer.direction = direction;
     socket.emit('move', localPlayer);
   }
-
-  // Tiro móvel
   if (mobileControls.shoot && !mobileControls.shootPressed) {
     mobileControls.shootPressed = true;
     shoot();

@@ -43,28 +43,30 @@ function createMap() {
 
   // Função para adicionar corredores horizontais
   function addHorizontalCorridors() {
-    for (let y = 1; y < rows - 1; y += 4) { // começa logo após a borda
+    for (let y = 1; y < rows - 1; y += 4) {
       let x = 1;
       while (x < cols - 2) {
         const length = Math.floor(Math.random() * 5) + 3; // blocos seguidos: 3-7
         for (let i = 0; i < length && x + i < cols - 1; i++) {
           map[y][x + i] = 2; // adiciona bloco de muro
         }
-        x += length + Math.floor(Math.random() * 4) + 2; // pula espaço entre trechos
+        // Abertura maior entre trechos
+        x += length + Math.floor(Math.random() * 10) + 6;
       }
     }
   }
 
   // Função para adicionar corredores verticais
   function addVerticalCorridors() {
-    for (let x = 1; x < cols - 1; x += 8) { // começa logo após a borda
+    for (let x = 1; x < cols - 1; x += 8) {
       let y = 1;
       while (y < rows - 2) {
         const length = Math.floor(Math.random() * 4) + 2; // blocos seguidos: 2-5
         for (let i = 0; i < length && y + i < rows - 1; i++) {
           map[y + i][x] = 2; // adiciona bloco de muro
         }
-        y += length + Math.floor(Math.random() * 4) + 2; // pula espaço entre trechos
+        // Abertura maior entre trechos
+        y += length + Math.floor(Math.random() * 10) + 6;
       }
     }
   }
